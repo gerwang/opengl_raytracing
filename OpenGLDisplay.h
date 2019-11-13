@@ -5,28 +5,30 @@
 #ifndef OPENGL_RAYTRACING_OPENGLDISPLAY_H
 #define OPENGL_RAYTRACING_OPENGLDISPLAY_H
 
-#include "glad/glad.h"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 
 class OpenGLDisplay {
 public:
 
     OpenGLDisplay();
 
+    ~OpenGLDisplay();
+
     static void initGL();
 
 
-    void mainLoop() {
-        while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
-            glfwSwapBuffers(window);
-        }
-    }
+    void mainLoop();
+
 
     static bool glInited;
 
 private:
+
+    void imGuiStart();
+
+    void imGuiEnd();
+
     GLFWwindow *window;
 };
 
