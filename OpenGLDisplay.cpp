@@ -47,6 +47,13 @@ OpenGLDisplay::OpenGLDisplay() {
     const char *glslVersion = "#version 430";
     ImGui_ImplOpenGL3_Init(glslVersion);
 
+    // load scene
+    std::string scenePath = Config::assetRoot + "/scenes/MainScene.json";
+    scene = std::make_unique<Scene>(scenePath);
+    scene->loadAssets(assetManager);
+
+    shader = std::make_unique<Shader>((Config::assetRoot + "/shaders/vertex_shader.glsl").c_str(),
+                                      (Config::assetRoot + "/shaders/fragment_shader.glsl").c_str());
 }
 
 void OpenGLDisplay::mainLoop() {
@@ -56,6 +63,32 @@ void OpenGLDisplay::mainLoop() {
         int displayW, displayH;
         glfwGetFramebufferSize(window, &displayW, &displayH);
         glViewport(0, 0, displayW, displayH);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::mat4 projMat = camera.getProjectMat();
+        glm::mat4 viewMat = camera.getViewMat();
+        glm::mat4 vpMat = projMat * viewMat;
+        shader->use();
+        for (auto &mesh:scene->meshRefs) {
+            viewMat = glm::mat4(1.0f); // fixme
+            mesh.modelMat = glm::mat4(1.0f); // fixme
+            glm::mat4 mvpMat = vpMat * mesh.modelMat;
+            glm::mat4 normalMat = glm::transpose(glm::inverse(viewMat * mesh.modelMat));
+            shader->setMat4("mvpMat", mvpMat);
+            shader->setMat4("normalMat", normalMat);
+
+            assetManager.textureMap[AssetManager::COLOR][mesh.texture]->use(0);
+            assetManager.textureMap[AssetManager::NORMAL][mesh.normal]->use(1);
+            assetManager.meshMap[mesh.ply]->draw();
+        }
+        shader->noUse();
+
+        glDisable(GL_DEPTH_TEST);
 
         imGuiEnd();
     }
@@ -68,7 +101,7 @@ void OpenGLDisplay::imGuiStart() {
     ImGui::NewFrame();
     {
         ImGui::Begin("View Control");
-
+        ImGui::Checkbox("Use perspective or orthogonal", &camera.usePerspective);
         ImGui::End();
     }
 }

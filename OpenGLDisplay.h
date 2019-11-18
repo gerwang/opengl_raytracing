@@ -7,6 +7,11 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <memory>
+#include "Scene.h"
+#include "AssetManager.h"
+#include "Camera.h"
+#include "shader.h"
 
 class OpenGLDisplay {
 public:
@@ -30,6 +35,15 @@ private:
     void imGuiEnd();
 
     GLFWwindow *window;
+
+    std::unique_ptr<Scene> scene;
+    AssetManager assetManager;
+    Camera camera;
+
+    std::unique_ptr<Shader> shader;
+
+    // input status
+    bool useRayTracing = false;
 };
 
 

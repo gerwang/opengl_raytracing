@@ -3,3 +3,5 @@
 //
 
 #include "Config.h"
+
+const std::string Config::assetRoot = "./assets";

@@ -1,0 +1,33 @@
+{
+  "objects": [
+    {
+      "ply": "Armadillo_uv.ply",
+      "texture": "texture1.png",
+      "normal": "texture1_normal.png",
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "lights": [],
+  "init": {
+    "pos": [
+      0,
+      0,
+      1
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "radius": 0
+  }
+}

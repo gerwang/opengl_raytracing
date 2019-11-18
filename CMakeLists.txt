@@ -18,7 +18,7 @@ add_executable(opengl_raytracing main.cpp OpenGLDisplay.cpp OpenGLDisplay.h Conf
         third_party/imgui/imgui.cpp
         third_party/imgui/imgui_draw.cpp
         third_party/imgui/imgui_widgets.cpp
-        third_party/imgui/imgui_demo.cpp)
+        third_party/imgui/imgui_demo.cpp AssetManager.cpp AssetManager.h MeshObject.cpp MeshObject.h Texture.cpp Texture.h Scene.cpp Scene.h Camera.cpp Camera.h)
 
 target_include_directories(opengl_raytracing PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(opengl_raytracing glad glfw ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+target_link_libraries(opengl_raytracing glad glfw ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} png jsoncpp OpenMeshCore)

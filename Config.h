@@ -5,11 +5,13 @@
 #ifndef OPENGL_RAYTRACING_CONFIG_H
 #define OPENGL_RAYTRACING_CONFIG_H
 
+#include <string>
 
 class Config {
 public:
-    const static int windowWidth = 1600;
-    const static int windowHeight = 900;
+    const static int windowWidth = 1280;
+    const static int windowHeight = 720;
+    const static std::string assetRoot;
 };
 
 
