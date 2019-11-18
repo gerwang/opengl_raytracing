@@ -153,18 +153,21 @@ void OpenGLDisplay::processKeyInput() {
     }
     if (!showUI) {
         glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+        glm::vec3 delta = glm::vec3(0.0f);
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            camera.pos += right * camera.speed;
+            delta += right * camera.speed;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            camera.pos -= right * camera.speed;
+            delta -= right * camera.speed;
         }
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            camera.pos += camera.forward * camera.speed;
+            delta += camera.forward * camera.speed;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            camera.pos -= camera.forward * camera.speed;
+            delta -= camera.forward * camera.speed;
         }
+        delta = scene->clipMove(camera.pos, delta);
+        camera.pos += delta;
     }
 }
 

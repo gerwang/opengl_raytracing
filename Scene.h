@@ -15,6 +15,7 @@ class MeshRef {
 public:
     std::string ply, texture, normal;
     glm::mat4 modelMat = glm::mat4(1.0f);
+    bool collisionAABB;
 };
 
 class LightRef {
@@ -31,7 +32,7 @@ public:
 
     void initCamera(Camera &camera);
 
-    void loadLight(Shader &shader);
+    glm::vec3 clipMove(const glm::vec3 &pos, glm::vec3 delta);
 
     std::vector<MeshRef> meshRefs;
 

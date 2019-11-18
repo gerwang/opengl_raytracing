@@ -9,7 +9,7 @@ glm::mat4 Camera::getProjectMat() {
     if (usePerspective) {
         return glm::perspective(fovy, aspect, zNear, zFar);
     } else {
-        return glm::ortho(left, right, bottom, top);
+        return glm::ortho(left, right, bottom, top, zNear, zFar);
     }
 }
 

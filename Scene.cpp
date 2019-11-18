@@ -41,6 +41,7 @@ void Scene::loadAssets(AssetManager &manager) {
         ref.ply = ply;
         ref.texture = texture;
         ref.normal = normal;
+        ref.collisionAABB = obj["collision"].asString() == "aabb";
         meshRefs.push_back(ref);
     }
 }
@@ -53,4 +54,16 @@ void Scene::initCamera(Camera &camera) {
     camera.pitch = cameraJson["pitch"].asFloat();
     camera.yaw = cameraJson["yaw"].asFloat();
     camera.radius = cameraJson["radius"].asFloat();
+}
+
+glm::vec3 Scene::clipMove(const glm::vec3 &pos, glm::vec3 delta) {
+    // model mat must be identity
+    for (auto &mesh:meshRefs) {
+        if (mesh.collisionAABB) {
+
+        } else {
+
+        }
+    }
+    return delta; // fixme
 }
