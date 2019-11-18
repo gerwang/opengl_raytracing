@@ -43,13 +43,19 @@ private:
     AssetManager assetManager;
     Camera camera;
 
-    std::unique_ptr<Shader> shader;
+    std::unique_ptr<Shader> shader, shadowShader;
 
     // input status
     bool useRayTracing = false;
+    int rayTracingIter = 0;
+
     bool showUI = true;
     float lastX, lastY;
     bool firstMouse = true;
+
+    // shadow map
+    int shadowWidth = 1024, shadowHeight = 1024;
+    GLuint depthMap, depthMapFBO;
 };
 
 

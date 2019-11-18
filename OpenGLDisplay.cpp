@@ -5,6 +5,7 @@
 #include "OpenGLDisplay.h"
 #include "Config.h"
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 #include "imgui.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -62,6 +63,25 @@ OpenGLDisplay::OpenGLDisplay() {
 
     shader = std::make_unique<Shader>((Config::assetRoot + "/shaders/vertex_shader.glsl").c_str(),
                                       (Config::assetRoot + "/shaders/fragment_shader.glsl").c_str());
+
+    shadowShader = std::make_unique<Shader>((Config::assetRoot + "/shaders/shadow_vertex_shader.glsl").c_str(),
+                                            (Config::assetRoot + "/shaders/shadow_fragment_shader.glsl").c_str());
+
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                 shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glGenFramebuffers(1, &depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void OpenGLDisplay::mainLoop() {
@@ -71,13 +91,31 @@ void OpenGLDisplay::mainLoop() {
         if (showUI) {
             imGuiStart();
         }
+        auto lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.3f, 5.0f);
+        auto lightView = glm::lookAt(scene->lights[0].pos, glm::vec3(0.0f), camera.up);
+        auto lightSpaceMatrix = lightProjection * lightView;
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, shadowWidth, shadowHeight);
+        shadowShader->use();
+        shadowShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        for (auto &mesh:scene->meshRefs) {
+            auto &obj = assetManager.meshMap[mesh.ply];
+            if (obj->name == "box.obj") {
+                continue;
+            }
+            obj->draw();
+        }
+        shadowShader->noUse();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         int displayW, displayH;
         glfwGetFramebufferSize(window, &displayW, &displayH);
         glViewport(0, 0, displayW, displayH);
-
-        glDepthFunc(GL_LESS);
-        glEnable(GL_DEPTH_TEST);
 
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -87,10 +125,10 @@ void OpenGLDisplay::mainLoop() {
         shader->use();
         shader->setInt("textureMap", 0);
         shader->setInt("normalMap", 1);
+        shader->setInt("shadowMap", 2);
         shader->setVec3("viewPos", camera.pos);
         for (auto &mesh:scene->meshRefs) {
-            mesh.modelMat = glm::mat4(1.0f); // fixme
-            mesh.modelMat[3][2] = -2.0f;
+            mesh.modelMat = glm::mat4(1.0f);
             glm::mat4 mvMat = viewMat * mesh.modelMat;
             glm::mat4 mvpMat = projMat * mvMat;
             glm::mat4 normalMat = glm::transpose(glm::inverse(mvMat));
@@ -100,7 +138,10 @@ void OpenGLDisplay::mainLoop() {
             assetManager.textureMap[AssetManager::COLOR][mesh.texture]->use(0);
             shader->setVec3("lightPos", scene->lights[0].pos);
             shader->setVec3("lightColor", scene->lights[0].color);
+            shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
             assetManager.textureMap[AssetManager::NORMAL][mesh.normal]->use(1);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, depthMap);
             assetManager.meshMap[mesh.ply]->draw();
         }
         shader->noUse();
@@ -123,6 +164,7 @@ void OpenGLDisplay::imGuiStart() {
         ImGui::Checkbox("Use perspective or orthogonal", &camera.usePerspective);
         ImGui::LabelText("camera pos", "%f %f %f", camera.pos.x, camera.pos.y, camera.pos.z);
         ImGui::LabelText("pitch & yaw", "%f %f", camera.pitch, camera.yaw);
+        ImGui::SliderFloat("fovy", &camera.fovy, 0, M_PI * 2);
         ImGui::End();
     }
 }
@@ -155,10 +197,10 @@ void OpenGLDisplay::processKeyInput() {
         glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
         glm::vec3 delta = glm::vec3(0.0f);
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            delta += right * camera.speed;
+            delta -= right * camera.speed;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            delta -= right * camera.speed;
+            delta += right * camera.speed;
         }
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             delta += camera.forward * camera.speed;

@@ -24,6 +24,7 @@ MeshObject::MeshObject(const std::string &name) : name(name) {
     }
 
     vertices.resize(mesh.n_vertices());
+    triangles.resize(mesh.n_faces() * 3);
     const float inf = 1e9;
     axisMin = glm::vec3(inf, inf, inf);
     axisMax = glm::vec3(-inf, -inf, -inf);
@@ -32,6 +33,8 @@ MeshObject::MeshObject(const std::string &name) : name(name) {
         vertices[i].position = glm::make_vec3(mesh.points()[i].data());
         vertices[i].texCoords = glm::make_vec2(mesh.texcoords2D()[i].data());
         vertices[i].normal = glm::make_vec3(mesh.vertex_normals()[i].data());
+        vertices[i].tangent = glm::vec3(0.0f);
+        vertices[i].biTangent = glm::vec3(0.0f);
         for (int j = 0; j < 3; j++) {
             axisMax[j] = std::max(axisMax[j], vertices[i].position[j]);
             axisMin[j] = std::min(axisMax[j], vertices[i].position[j]);
@@ -39,22 +42,44 @@ MeshObject::MeshObject(const std::string &name) : name(name) {
     }
 
     {
-        indices.resize(mesh.n_faces() * 3);
         int curIdx = 0;
         for (auto fit = mesh.faces_begin(); fit != mesh.faces_end(); ++fit) {
+            std::vector<Vertex> triVerts;
+            triVerts.reserve(3);
             for (auto vit = mesh.fv_begin(*fit); vit != mesh.fv_end(*fit); ++vit) {
-                indices[curIdx++] = vit->idx();
+                triVerts.push_back(vertices[vit->idx()]);
+            }
+            glm::vec3 edge1 = triVerts[1].position - triVerts[0].position;
+            glm::vec3 edge2 = triVerts[2].position - triVerts[0].position;
+            glm::vec2 deltaUV1 = triVerts[1].texCoords - triVerts[0].texCoords;
+            glm::vec2 deltaUV2 = triVerts[2].texCoords - triVerts[0].texCoords;
+            float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+            glm::vec3 tangent, biTangent;
+
+            tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+            tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+            tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+            tangent = glm::normalize(tangent);
+
+            biTangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+            biTangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+            biTangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+            biTangent = glm::normalize(biTangent);
+
+            for (int i = 0; i < 3; i++) {
+                triVerts[i].tangent = tangent;
+                triVerts[i].biTangent = biTangent;
+                triangles[curIdx++] = triVerts[i];
             }
         }
     }
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.n_vertices() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, triangles.size() * sizeof(Vertex), triangles.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, position));
@@ -62,15 +87,16 @@ MeshObject::MeshObject(const std::string &name) : name(name) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, texCoords));
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.n_faces() * sizeof(unsigned) * 3, indices.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, tangent));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, biTangent));
 
     glBindVertexArray(0);
 }
 
 void MeshObject::draw() {
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, triangles.size());
     glBindVertexArray(0);
 }

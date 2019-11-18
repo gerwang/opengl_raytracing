@@ -14,21 +14,21 @@ public:
     float speed = 0.02f;
 
     // perspective
-    float fovy = 50.0f;
+    float fovy = glm::radians(45.0f); // prevbug: pls convert to radians
     float aspect = float(Config::windowWidth) / Config::windowHeight;
     float zNear = 0.001f;
     float zFar = 10.0f;
 
     // orthogonal
-    float left = 0.8f;
-    float right = -0.8f;
-    float bottom = 0.45f;
-    float top = -0.45f;
+    float left = -0.8f;
+    float right = 0.8f;
+    float bottom = -0.45f;
+    float top = 0.45f;
 
     // view
     glm::vec3 pos = glm::vec3(0.0f, 0.0f, 3.0f);
     glm::vec3 forward;
-    glm::vec3 up = glm::vec3(0.0f, -1.0f, 0.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
     float yaw = -90, pitch = 0;
 
