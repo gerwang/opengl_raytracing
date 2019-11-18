@@ -11,6 +11,7 @@
 
 bool OpenGLDisplay::glInited = false;
 
+
 void OpenGLDisplay::initGL() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -36,6 +37,11 @@ OpenGLDisplay::OpenGLDisplay() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return;
     }
+    glfwSetWindowUserPointer(window, this);
+    glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) {
+        auto *me = (OpenGLDisplay *) glfwGetWindowUserPointer(window);
+        me->mouseMoveCallback(window, xpos, ypos);
+    });
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -51,6 +57,8 @@ OpenGLDisplay::OpenGLDisplay() {
     std::string scenePath = Config::assetRoot + "/scenes/MainScene.json";
     scene = std::make_unique<Scene>(scenePath);
     scene->loadAssets(assetManager);
+    scene->initCamera(camera);
+
 
     shader = std::make_unique<Shader>((Config::assetRoot + "/shaders/vertex_shader.glsl").c_str(),
                                       (Config::assetRoot + "/shaders/fragment_shader.glsl").c_str());
@@ -58,7 +66,11 @@ OpenGLDisplay::OpenGLDisplay() {
 
 void OpenGLDisplay::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
-        imGuiStart();
+        glfwPollEvents();
+        processKeyInput();
+        if (showUI) {
+            imGuiStart();
+        }
 
         int displayW, displayH;
         glfwGetFramebufferSize(window, &displayW, &displayH);
@@ -72,17 +84,22 @@ void OpenGLDisplay::mainLoop() {
 
         glm::mat4 projMat = camera.getProjectMat();
         glm::mat4 viewMat = camera.getViewMat();
-        glm::mat4 vpMat = projMat * viewMat;
         shader->use();
+        shader->setInt("textureMap", 0);
+        shader->setInt("normalMap", 1);
+        shader->setVec3("viewPos", camera.pos);
         for (auto &mesh:scene->meshRefs) {
-            viewMat = glm::mat4(1.0f); // fixme
             mesh.modelMat = glm::mat4(1.0f); // fixme
-            glm::mat4 mvpMat = vpMat * mesh.modelMat;
-            glm::mat4 normalMat = glm::transpose(glm::inverse(viewMat * mesh.modelMat));
+            mesh.modelMat[3][2] = -2.0f;
+            glm::mat4 mvMat = viewMat * mesh.modelMat;
+            glm::mat4 mvpMat = projMat * mvMat;
+            glm::mat4 normalMat = glm::transpose(glm::inverse(mvMat));
             shader->setMat4("mvpMat", mvpMat);
             shader->setMat4("normalMat", normalMat);
-
+            shader->setMat4("modelMat", mesh.modelMat);
             assetManager.textureMap[AssetManager::COLOR][mesh.texture]->use(0);
+            shader->setVec3("lightPos", scene->lights[0].pos);
+            shader->setVec3("lightColor", scene->lights[0].color);
             assetManager.textureMap[AssetManager::NORMAL][mesh.normal]->use(1);
             assetManager.meshMap[mesh.ply]->draw();
         }
@@ -90,18 +107,22 @@ void OpenGLDisplay::mainLoop() {
 
         glDisable(GL_DEPTH_TEST);
 
-        imGuiEnd();
+        if (showUI) {
+            imGuiEnd();
+        }
+        glfwSwapBuffers(window);
     }
 }
 
 void OpenGLDisplay::imGuiStart() {
-    glfwPollEvents();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     {
         ImGui::Begin("View Control");
         ImGui::Checkbox("Use perspective or orthogonal", &camera.usePerspective);
+        ImGui::LabelText("camera pos", "%f %f %f", camera.pos.x, camera.pos.y, camera.pos.z);
+        ImGui::LabelText("pitch & yaw", "%f %f", camera.pitch, camera.yaw);
         ImGui::End();
     }
 }
@@ -109,7 +130,6 @@ void OpenGLDisplay::imGuiStart() {
 void OpenGLDisplay::imGuiEnd() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(window);
 }
 
 OpenGLDisplay::~OpenGLDisplay() {
@@ -119,4 +139,57 @@ OpenGLDisplay::~OpenGLDisplay() {
     glfwDestroyWindow(window);
     glfwTerminate();
     glInited = false;
+}
+
+void OpenGLDisplay::processKeyInput() {
+    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+        showUI = !showUI;
+        if (showUI) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        } else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            firstMouse = true;
+        }
+    }
+    if (!showUI) {
+        glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            camera.pos += right * camera.speed;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            camera.pos -= right * camera.speed;
+        }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            camera.pos += camera.forward * camera.speed;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            camera.pos -= camera.forward * camera.speed;
+        }
+    }
+}
+
+void OpenGLDisplay::mouseMoveCallback(GLFWwindow *window, double xpos, double ypos) {
+    if (showUI || firstMouse) {
+        lastX = float(xpos);
+        lastY = float(ypos);
+        firstMouse = false;
+    }
+    float xOffset = float(xpos) - lastX;
+    float yOffset = lastY - float(ypos);
+    lastX = float(xpos);
+    lastY = float(ypos);
+    xOffset *= camera.sensitivity;
+    yOffset *= camera.sensitivity;
+    camera.yaw += xOffset;
+    camera.pitch += yOffset;
+    if (camera.pitch > 89.0f) {
+        camera.pitch = 89.0f;
+    }
+    if (camera.pitch < -89.0f) {
+        camera.pitch = -89.0f;
+    }
+    camera.forward.x = cos(glm::radians(camera.pitch)) * cos(glm::radians(camera.yaw));
+    camera.forward.y = sin(glm::radians(camera.pitch));
+    camera.forward.z = cos(glm::radians(camera.pitch)) * sin(glm::radians(camera.yaw));
+    camera.forward = glm::normalize(camera.forward);
 }

@@ -6,24 +6,35 @@
 #define OPENGL_RAYTRACING_CAMERA_H
 
 #include <glm/glm.hpp>
+#include "Config.h"
 
 class Camera {
 public:
     float radius{};
+    float speed = 0.02f;
 
     // perspective
-    float fovy = 25.0f;
-    float aspect = 9.0f / 16.0f;
+    float fovy = 50.0f;
+    float aspect = float(Config::windowWidth) / Config::windowHeight;
     float zNear = 0.1f;
     float zFar = 100.0f;
 
     // orthogonal
-    float left = -1.0f;
-    float right = 1.0f;
-    float bottom = -1.0f;
-    float top = 1.0f;
+    float left = -5.0f;
+    float right = 5.0f;
+    float bottom = -5.0f;
+    float top = 5.0f;
+
+    // view
+    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 forward;
+    glm::vec3 up = glm::vec3(0.0f, -1.0f, 0.0f);
+
+    float yaw = -90, pitch = 0;
 
     bool usePerspective = true;
+
+    float sensitivity = 0.05f;
 
     glm::mat4 getProjectMat();
 

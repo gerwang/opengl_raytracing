@@ -54,8 +54,11 @@ bool Texture::read_png_file(const char *file_name) {
     bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
     number_of_passes = png_set_interlace_handling(png_ptr);
-    png_read_update_info(png_ptr, info_ptr);
 
+    if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        png_set_palette_to_rgb(png_ptr);
+    }
+    png_read_update_info(png_ptr, info_ptr);
 
     /* read file */
     if (setjmp(png_jmpbuf(png_ptr))) {
@@ -85,13 +88,24 @@ Texture::~Texture() {
 }
 
 void Texture::upload() {
-    int channel = 4;
+    int channel = 3;
+    int stride = 0;
+    if (color_type == PNG_COLOR_TYPE_RGB) {
+        stride = 3;
+    } else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
+        stride = 4;
+    } else if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        stride = 3;
+    } else {
+        std::cerr << "unrecognized png type" << std::endl;
+    }
+
     buffer.resize(width * height * channel);
     int cnt = 0;
     for (int y = 0; y < height; y++) {
         png_byte *row = row_pointers[y];
         for (int x = 0; x < width; x++) {
-            png_byte *ptr = &(row[x * 4]);
+            png_byte *ptr = &(row[x * stride]);
             for (int c = 0; c < channel; c++) {
                 buffer[cnt++] = float(ptr[c]) / 255.0f;
             }
@@ -100,7 +114,7 @@ void Texture::upload() {
 
     glGenTextures(1, &handle);
     glBindTexture(GL_TEXTURE_2D, handle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, buffer.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, buffer.data());
     glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

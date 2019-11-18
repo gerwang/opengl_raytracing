@@ -14,5 +14,5 @@ glm::mat4 Camera::getProjectMat() {
 }
 
 glm::mat4 Camera::getViewMat() {
-    return glm::mat4(); // TODO
+    return glm::lookAt(pos, pos + forward, up);
 }

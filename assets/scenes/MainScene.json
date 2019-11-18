@@ -1,33 +1,88 @@
 {
   "objects": [
     {
-      "ply": "Armadillo_uv.ply",
-      "texture": "texture1.png",
-      "normal": "texture1_normal.png",
+      "ply": "lucy.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "aabb"
+    },
+    {
+      "ply": "Armadillo.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "aabb"
+    },
+    {
+      "ply": "happy.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "aabb"
+    },
+    {
+      "ply": "dragon.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "aabb"
+    },
+    {
+      "ply": "bunny.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "aabb"
+    },
+    {
+      "ply": "box.obj",
+      "texture": "white.png",
+      "normal": "white_normal.png",
+      "collision": "face"
+    }
+  ],
+  "lights": [
+    {
       "pos": [
-        0,
-        0,
-        0
+        0.309828,
+        0.78116,
+        0.028195
       ],
-      "rotation": [
-        0,
-        0,
-        0
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "pos": [
+        0.325473,
+        0.721036,
+        1.07964
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "pos": [
+        0.016065,
+        0.776703,
+        -0.216654
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
       ]
     }
   ],
-  "lights": [],
-  "init": {
+  "camera": {
     "pos": [
-      0,
-      0,
-      1
+      0.128812,
+      0.163920,
+      0.358391
     ],
-    "rotation": [
-      0,
-      0,
-      0
-    ],
-    "radius": 0
+    "pitch": 2.85,
+    "yaw": 267,
+    "radius": 0.01
   }
 }

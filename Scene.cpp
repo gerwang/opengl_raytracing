@@ -17,6 +17,15 @@ Scene::Scene(const std::string &jsonPath) {
         return;
     }
     loaded = true;
+
+    for (auto light:root["lights"]) {
+        LightRef ref{};
+        for (int i = 0; i < 3; i++) {
+            ref.pos[i] = light["pos"][i].asFloat();
+            ref.color[i] = light["color"][i].asFloat();
+        }
+        lights.push_back(ref);
+    }
 }
 
 void Scene::loadAssets(AssetManager &manager) {
@@ -32,7 +41,16 @@ void Scene::loadAssets(AssetManager &manager) {
         ref.ply = ply;
         ref.texture = texture;
         ref.normal = normal;
-        // TODO model mat
         meshRefs.push_back(ref);
     }
+}
+
+void Scene::initCamera(Camera &camera) {
+    Json::Value cameraJson = root["camera"];
+    for (int i = 0; i < 3; i++) {
+        camera.pos[i] = cameraJson["pos"][i].asFloat();
+    }
+    camera.pitch = cameraJson["pitch"].asFloat();
+    camera.yaw = cameraJson["yaw"].asFloat();
+    camera.radius = cameraJson["radius"].asFloat();
 }

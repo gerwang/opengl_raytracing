@@ -25,6 +25,7 @@ public:
 
     void mainLoop();
 
+    void mouseMoveCallback(GLFWwindow *window, double xpos, double ypos);
 
     static bool glInited;
 
@@ -33,6 +34,8 @@ private:
     void imGuiStart();
 
     void imGuiEnd();
+
+    void processKeyInput();
 
     GLFWwindow *window;
 
@@ -44,6 +47,9 @@ private:
 
     // input status
     bool useRayTracing = false;
+    bool showUI = true;
+    float lastX, lastY;
+    bool firstMouse = true;
 };
 
 

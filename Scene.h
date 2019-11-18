@@ -8,11 +8,19 @@
 #include <string>
 #include <json/json.h>
 #include "AssetManager.h"
+#include "Camera.h"
+#include "shader.h"
 
 class MeshRef {
 public:
     std::string ply, texture, normal;
-    glm::mat4 modelMat;
+    glm::mat4 modelMat = glm::mat4(1.0f);
+};
+
+class LightRef {
+public:
+    glm::vec3 pos;
+    glm::vec3 color;
 };
 
 class Scene {
@@ -21,7 +29,13 @@ public:
 
     void loadAssets(AssetManager &manager);
 
+    void initCamera(Camera &camera);
+
+    void loadLight(Shader &shader);
+
     std::vector<MeshRef> meshRefs;
+
+    std::vector<LightRef> lights;
 
 private:
     Json::Value root;
