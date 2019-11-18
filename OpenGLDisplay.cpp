@@ -43,6 +43,18 @@ OpenGLDisplay::OpenGLDisplay() {
         auto *me = (OpenGLDisplay *) glfwGetWindowUserPointer(window);
         me->mouseMoveCallback(window, xpos, ypos);
     });
+    glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
+        auto *me = (OpenGLDisplay *) glfwGetWindowUserPointer(window);
+        if (!me->useRayTracing && action == GLFW_PRESS) {
+            me->showUI = !me->showUI;
+            if (me->showUI) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            } else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                me->firstMouse = true;
+            }
+        }
+    });
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -161,10 +173,24 @@ void OpenGLDisplay::imGuiStart() {
     ImGui::NewFrame();
     {
         ImGui::Begin("View Control");
-        ImGui::Checkbox("Use perspective or orthogonal", &camera.usePerspective);
-        ImGui::LabelText("camera pos", "%f %f %f", camera.pos.x, camera.pos.y, camera.pos.z);
-        ImGui::LabelText("pitch & yaw", "%f %f", camera.pitch, camera.yaw);
-        ImGui::SliderFloat("fovy", &camera.fovy, 0, M_PI * 2);
+        if (!useRayTracing) {
+            ImGui::Checkbox("Use perspective or orthogonal", &camera.usePerspective);
+            ImGui::LabelText("camera pos", "%f %f %f", camera.pos.x, camera.pos.y, camera.pos.z);
+            ImGui::LabelText("pitch & yaw", "%f %f", camera.pitch, camera.yaw);
+            ImGui::SliderFloat("fovy", &camera.fovy, 0, M_PI * 2);
+            if (ImGui::Button("start ray tracing")) {
+                useRayTracing = true;
+                rayTracingIter = 0;
+            }
+            ImGui::Text("Tip: Press Tab to navigate, ASDW + Mouse");
+        } else {
+            rayTracingIter++;
+            ImGui::Text("current iteration: %d", rayTracingIter);
+            if (ImGui::Button("stop ray tracing")) {
+                useRayTracing = false;
+            }
+
+        }
         ImGui::End();
     }
 }
@@ -184,15 +210,6 @@ OpenGLDisplay::~OpenGLDisplay() {
 }
 
 void OpenGLDisplay::processKeyInput() {
-    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
-        showUI = !showUI;
-        if (showUI) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            firstMouse = true;
-        }
-    }
     if (!showUI) {
         glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
         glm::vec3 delta = glm::vec3(0.0f);
