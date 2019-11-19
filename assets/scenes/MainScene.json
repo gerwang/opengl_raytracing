@@ -4,7 +4,7 @@
       "ply": "small_box.obj",
       "texture": "white.png",
       "normal": "white_normal.png",
-      "collision": "face",
+      "collision": "aabb",
       "light": true,
       "reflect": [
         1,
@@ -16,8 +16,9 @@
         0,
         0
       ],
-      "cone": 30,
-      "eta": 1.458
+      "mirrorRatio": 0.5,
+      "eta": 1.458,
+      "blendNormal": false
     },
     {
       "ply": "box.obj",
@@ -35,8 +36,9 @@
         0,
         0
       ],
-      "cone": 30,
-      "eta": 1.458
+      "mirrorRatio": 0.5,
+      "eta": 1.458,
+      "blendNormal": false
     }
   ],
   "lights": [

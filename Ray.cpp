@@ -4,6 +4,7 @@
 
 #include "Ray.h"
 #include <algorithm>
+#include <iostream>
 
 const float eps = 1e-9;
 
@@ -19,8 +20,11 @@ bool Ray::intersectionAABB(const glm::vec3 &axisMin, const glm::vec3 &axisMax, f
         } else {
             float t1 = (axisMax[i] - pos[i]) / direction[i];
             float t2 = (axisMin[i] - pos[i]) / direction[i];
-            tMin = std::max(tMin, t2);
-            tMax = std::min(tMax, t1);
+            if (t1 > t2) {
+                std::swap(t1, t2); // prevbug: ftl
+            }
+            tMin = std::max(tMin, t1);
+            tMax = std::min(tMax, t2);
             if (tMin > tMax) {
                 return false;
             }

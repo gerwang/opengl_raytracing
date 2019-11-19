@@ -19,7 +19,7 @@ public:
 
     glm::vec3 reflectance, refractance;
     bool isLight;
-    float reflectCone;
+    float mirrorRatio;
     float refractEta;
     bool blendNormal;
 };
@@ -38,11 +38,12 @@ public:
 
     void initCamera(Camera &camera);
 
-    glm::vec3 clipMove(const Camera& camera, const glm::vec3 &pos, glm::vec3 delta);
+    glm::vec3 clipMove(const Camera &camera, const glm::vec3 &pos, glm::vec3 delta);
 
     std::vector<MeshRef> meshRefs;
 
     std::vector<LightRef> lights;
+
 
 private:
     AssetManager *assetManager{};

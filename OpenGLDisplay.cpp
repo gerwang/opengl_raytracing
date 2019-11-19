@@ -192,6 +192,7 @@ void OpenGLDisplay::mainLoop() {
             int total = Config::rayHeight * Config::rayWidth;
 
             omp_set_num_threads(12);
+
 #pragma omp parallel for
             for (int _ = 0; _ < total; _++) {
 //                std::cout << _ << std::endl;
@@ -257,7 +258,10 @@ glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &
         auto &obj = assetManager.meshMap[mesh.ply];
         auto &triangles = obj->triangles;
         if (mesh.collisionAABB) {
-
+            obj->publicQueryAABBTree(ray, tShoot, triIdx, targetU, targetV);
+            if (triIdx != -1) {
+                targetMesh = &mesh;
+            }
         } else {
             for (int i = 0; i < int(triangles.size()); i += 3) {
                 float t, u, v;
@@ -302,7 +306,6 @@ glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &
             glm::vec3 nextStart = ray.pos + ray.direction * tShoot;
 
             glm::vec3 reflectDir = glm::reflect(ray.direction, normal);
-            targetMesh->reflectCone; // TODO
             Ray reflectRay{nextStart, reflectDir};
             glm::vec3 reflectColor = rayTracing(reflectRay, depth + 1, targetMesh->reflectance * prevIntensity);
 
