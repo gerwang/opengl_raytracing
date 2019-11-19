@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <random>
 #include "Scene.h"
 #include "AssetManager.h"
 #include "Camera.h"
@@ -38,7 +39,8 @@ private:
 
     void processKeyInput();
 
-    glm::vec3 rayTracing(const Ray &ray, int depth, const glm::vec3 &prevIntensity);
+    glm::vec3 rayTracing(const Ray &ray, int depth, const glm::vec3 &prevIntensity, std::mt19937 &gen,
+                         std::uniform_real_distribution<> &dis);
 
     GLFWwindow *window;
 

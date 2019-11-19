@@ -205,7 +205,7 @@ void OpenGLDisplay::mainLoop() {
                 glm::vec4 direction = glm::vec4(fx, fy, 1, 1);
                 direction = glm::normalize(pvInvMat * direction);
                 Ray ray{camera.pos, direction};
-                glm::vec3 color = rayTracing(ray, 0, glm::vec3(1.0f));
+                glm::vec3 color = rayTracing(ray, 0, glm::vec3(1.0f), gen, dis);
                 renderBuffer[_] = (renderBuffer[_] * float(rayTracingIter - 1) + color) / float(rayTracingIter);
             }
 
@@ -246,7 +246,8 @@ void OpenGLDisplay::mainLoop() {
     }
 }
 
-glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &prevIntensity) {
+glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &prevIntensity, std::mt19937 &gen,
+                                    std::uniform_real_distribution<> &dis) {
     if (depth > Config::rayMaxDepth || glm::length(prevIntensity) < Config::rayThreshold) {
         return glm::vec3(0.0f);
     }
@@ -258,8 +259,13 @@ glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &
         auto &obj = assetManager.meshMap[mesh.ply];
         auto &triangles = obj->triangles;
         if (mesh.collisionAABB) {
-            obj->publicQueryAABBTree(ray, tShoot, triIdx, targetU, targetV);
-            if (triIdx != -1) {
+            int tmp = -1;
+            obj->publicQueryAABBTree(ray, tShoot, tmp, targetU, targetV);
+//            if (triIdx != -1) { prevbug!!!
+//                targetMesh = &mesh;
+//            }
+            if (tmp != -1) {
+                triIdx = tmp;
                 targetMesh = &mesh;
             }
         } else {
@@ -307,15 +313,33 @@ glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &
 
             glm::vec3 reflectDir = glm::reflect(ray.direction, normal);
             Ray reflectRay{nextStart, reflectDir};
-            glm::vec3 reflectColor = rayTracing(reflectRay, depth + 1, targetMesh->reflectance * prevIntensity);
+            glm::vec3 reflectColor = rayTracing(reflectRay, depth + 1, targetMesh->mirrorRatio * prevIntensity, gen,
+                                                dis);
+
+            double phi = dis(gen) * M_PI * 2;
+            double theta = dis(gen) * M_PI * 0.5;
+            glm::vec3 tan1 = obj->triangles[triIdx + 1].position - obj->triangles[triIdx].position;
+            glm::vec3 tan2 = glm::cross(normal, tan1);
+            tan1 = glm::normalize(tan1);
+            tan2 = glm::normalize(tan2);
+            glm::vec3 diffuseDir = normal * cosf(theta) + tan1 * sinf(theta) * cosf(phi) +
+                                   tan2 * sinf(theta) * sinf(phi);
+            diffuseDir = glm::normalize(diffuseDir);
+            Ray diffuseRay{nextStart, diffuseDir};
+            glm::vec3 diffuseColor = rayTracing(diffuseRay, depth + 1,
+                                                (1.0f - targetMesh->mirrorRatio) * targetMesh->reflectance *
+                                                prevIntensity, gen,
+                                                dis);
 
             glm::vec3 refractDir = glm::refract(ray.direction, normal, refractEta);
             glm::vec3 refractColor = glm::vec3(0.0f);
             if (refractDir != glm::vec3(0.0f)) {
                 Ray refractRay{nextStart, refractDir};
-                refractColor = rayTracing(refractRay, depth + 1, targetMesh->refractance * prevIntensity);
+                refractColor = rayTracing(refractRay, depth + 1, targetMesh->refractance * prevIntensity, gen, dis);
             }
-            return reflectColor * targetMesh->reflectance + refractColor * targetMesh->refractance;
+            return reflectColor * targetMesh->mirrorRatio +
+                   diffuseColor * (1.0f - targetMesh->mirrorRatio) * targetMesh->reflectance +
+                   refractColor * targetMesh->refractance;
         }
 
     } else { // shoot to background

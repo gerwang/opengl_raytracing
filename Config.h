@@ -13,8 +13,8 @@ public:
     const static int windowHeight = 720;
     const static int rayWidth = 1280;
     const static int rayHeight = 720;
-    const static int rayMaxDepth = 0;
-    constexpr const static float rayThreshold = 0.01f;
+    const static int rayMaxDepth = 6;
+    constexpr const static float rayThreshold = 0.1f;
     const static std::string assetRoot;
 };
 
