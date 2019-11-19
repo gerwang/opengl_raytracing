@@ -11,6 +11,10 @@ class Config {
 public:
     const static int windowWidth = 1280;
     const static int windowHeight = 720;
+    const static int rayWidth = 128;
+    const static int rayHeight = 72;
+    const static int rayMaxDepth = 10;
+    constexpr const static float rayThreshold = 0.01f;
     const static std::string assetRoot;
 };
 

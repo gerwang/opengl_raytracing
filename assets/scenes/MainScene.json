@@ -1,40 +1,42 @@
 {
   "objects": [
     {
-      "ply": "lucy.obj",
+      "ply": "small_box.obj",
       "texture": "white.png",
       "normal": "white_normal.png",
-      "collision": "aabb"
-    },
-    {
-      "ply": "Armadillo.obj",
-      "texture": "texture5.png",
-      "normal": "texture5_normal.png",
-      "collision": "aabb"
-    },
-    {
-      "ply": "happy.obj",
-      "texture": "white.png",
-      "normal": "white_normal.png",
-      "collision": "aabb"
-    },
-    {
-      "ply": "dragon.obj",
-      "texture": "texture1.png",
-      "normal": "texture1_normal.png",
-      "collision": "aabb"
-    },
-    {
-      "ply": "bunny.obj",
-      "texture": "texture1.png",
-      "normal": "texture1_normal.png",
-      "collision": "aabb"
+      "collision": "face",
+      "light": true,
+      "reflect": [
+        1,
+        1,
+        1
+      ],
+      "refract": [
+        0,
+        0,
+        0
+      ],
+      "cone": 30,
+      "eta": 1.458
     },
     {
       "ply": "box.obj",
       "texture": "white.png",
       "normal": "white_normal.png",
-      "collision": "face"
+      "collision": "face",
+      "light": false,
+      "reflect": [
+        0.7,
+        0.2,
+        0.3
+      ],
+      "refract": [
+        0,
+        0,
+        0
+      ],
+      "cone": 30,
+      "eta": 1.458
     }
   ],
   "lights": [

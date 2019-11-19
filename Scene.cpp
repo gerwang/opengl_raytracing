@@ -42,6 +42,13 @@ void Scene::loadAssets(AssetManager &manager) {
         ref.texture = texture;
         ref.normal = normal;
         ref.collisionAABB = obj["collision"].asString() == "aabb";
+        ref.isLight = obj["light"].asBool();
+        for (int i = 0; i < 3; i++) {
+            ref.reflectance[i] = obj["reflect"][i].asFloat();
+            ref.refractance[i] = obj["refract"][i].asFloat();
+        }
+        ref.reflectCone = glm::radians(obj["cone"].asFloat());
+        ref.refractEta = obj["eta"].asFloat();
         meshRefs.push_back(ref);
     }
 }

@@ -16,6 +16,12 @@ public:
     std::string ply, texture, normal;
     glm::mat4 modelMat = glm::mat4(1.0f);
     bool collisionAABB;
+
+    glm::vec3 reflectance, refractance;
+    bool isLight;
+    float reflectCone;
+    float refractEta;
+    bool blendNormal;
 };
 
 class LightRef {

@@ -12,6 +12,7 @@
 #include "AssetManager.h"
 #include "Camera.h"
 #include "shader.h"
+#include "Ray.h"
 
 class OpenGLDisplay {
 public:
@@ -37,17 +38,20 @@ private:
 
     void processKeyInput();
 
+    glm::vec3 rayTracing(const Ray &ray, int depth, const glm::vec3 &prevIntensity);
+
     GLFWwindow *window;
 
     std::unique_ptr<Scene> scene;
     AssetManager assetManager;
     Camera camera;
 
-    std::unique_ptr<Shader> shader, shadowShader;
+    std::unique_ptr<Shader> shader, shadowShader, shaderQuad;
 
     // input status
     bool useRayTracing = false;
     int rayTracingIter = 0;
+    std::vector<glm::vec3> renderBuffer;
 
     bool showUI = true;
     float lastX, lastY;
@@ -56,6 +60,8 @@ private:
     // shadow map
     int shadowWidth = 1024, shadowHeight = 1024;
     GLuint depthMap, depthMapFBO;
+    GLuint rayTexture;
+    GLuint quadVAO{}, quadVBO{};
 };
 
 
