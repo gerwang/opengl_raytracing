@@ -11,6 +11,7 @@ target_link_libraries(glad ${CMAKE_DL_LIBS})
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(OpenMP REQUIRED)
 
 add_executable(opengl_raytracing main.cpp OpenGLDisplay.cpp OpenGLDisplay.h Config.cpp Config.h
         third_party/imgui/examples/imgui_impl_glfw.cpp
@@ -21,4 +22,4 @@ add_executable(opengl_raytracing main.cpp OpenGLDisplay.cpp OpenGLDisplay.h Conf
         third_party/imgui/imgui_demo.cpp AssetManager.cpp AssetManager.h MeshObject.cpp MeshObject.h Texture.cpp Texture.h Scene.cpp Scene.h Camera.cpp Camera.h Ray.cpp Ray.h)
 
 target_include_directories(opengl_raytracing PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(opengl_raytracing glad glfw ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} png jsoncpp OpenMeshCore)
+target_link_libraries(opengl_raytracing glad glfw ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} png jsoncpp OpenMeshCore OpenMP::OpenMP_CXX)

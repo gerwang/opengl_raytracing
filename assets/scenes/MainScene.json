@@ -37,25 +37,6 @@
       ],
       "cone": 30,
       "eta": 1.458
-    },
-    {
-      "ply": "lucy.obj",
-      "texture": "white.png",
-      "normal": "white_normal.png",
-      "collision": "face",
-      "light": false,
-      "reflect": [
-        0,
-        0,
-        0
-      ],
-      "refract": [
-        0,
-        0,
-        0
-      ],
-      "cone": 30,
-      "eta": 1.458
     }
   ],
   "lights": [

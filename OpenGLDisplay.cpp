@@ -7,6 +7,7 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <random>
+#include <omp.h>
 #include "imgui.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -189,7 +190,11 @@ void OpenGLDisplay::mainLoop() {
             std::uniform_real_distribution<> dis(0, 1);
 
             int total = Config::rayHeight * Config::rayWidth;
+
+            omp_set_num_threads(12);
+#pragma omp parallel for
             for (int _ = 0; _ < total; _++) {
+//                std::cout << _ << std::endl;
                 int y = _ / Config::rayWidth;
                 int x = _ % Config::rayWidth;
                 float fx = x + dis(gen);
@@ -297,6 +302,7 @@ glm::vec3 OpenGLDisplay::rayTracing(const Ray &ray, int depth, const glm::vec3 &
             glm::vec3 nextStart = ray.pos + ray.direction * tShoot;
 
             glm::vec3 reflectDir = glm::reflect(ray.direction, normal);
+            targetMesh->reflectCone; // TODO
             Ray reflectRay{nextStart, reflectDir};
             glm::vec3 reflectColor = rayTracing(reflectRay, depth + 1, targetMesh->reflectance * prevIntensity);
 
