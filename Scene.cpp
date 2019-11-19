@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include "Scene.h"
+#include "Ray.h"
 
 Scene::Scene(const std::string &jsonPath) {
     Json::CharReaderBuilder rBuilder;
@@ -29,6 +30,7 @@ Scene::Scene(const std::string &jsonPath) {
 }
 
 void Scene::loadAssets(AssetManager &manager) {
+    assetManager = &manager;
     Json::Value objects = root["objects"];
     for (auto obj : objects) {
         std::string ply = obj["ply"].asString();
@@ -63,14 +65,33 @@ void Scene::initCamera(Camera &camera) {
     camera.radius = cameraJson["radius"].asFloat();
 }
 
-glm::vec3 Scene::clipMove(const glm::vec3 &pos, glm::vec3 delta) {
+glm::vec3 Scene::clipMove(const Camera &camera, const glm::vec3 &pos, glm::vec3 delta) {
     // model mat must be identity
+    if (delta == glm::vec3(0.0f)) {
+        return delta;
+    }
+    float len = glm::length(delta);
+    delta /= len;
+    Ray ray{pos, delta};
+    float tMin = 1e9f;
     for (auto &mesh:meshRefs) {
+        auto &obj = assetManager->meshMap[mesh.ply];
         if (mesh.collisionAABB) {
-
+            float t;
+            if (ray.intersectionAABB(obj->axisMin, obj->axisMax, t)) {
+                tMin = std::min(tMin, t);
+            }
         } else {
-
+            float t, u, v;
+            for (int i = 0; i < int(obj->triangles.size()); i += 3) {
+                if (ray.intersectionTriangle(obj->triangles[i].position, obj->triangles[i + 1].position,
+                                             obj->triangles[i + 2].position, t, u, v)) {
+                    tMin = std::min(tMin, t);
+                }
+            }
         }
     }
-    return delta; // fixme
+    tMin = std::min(tMin - camera.radius, len);
+    tMin = std::max(tMin, 0.0f);
+    return delta * tMin;
 }

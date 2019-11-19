@@ -374,7 +374,7 @@ void OpenGLDisplay::processKeyInput() {
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
             delta -= camera.forward * camera.speed;
         }
-        delta = scene->clipMove(camera.pos, delta);
+        delta = scene->clipMove(camera, camera.pos, delta);
         camera.pos += delta;
     }
 }
